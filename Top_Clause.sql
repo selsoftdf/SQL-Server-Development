@@ -2,6 +2,7 @@
 -- Created By          : Selcuk KILINC
 -- Version             : 1.0
 -- Executed SQL Version: Microsoft SQL Server 2019 
+-- File No             : 1 
 
 -- Suggestions : Run the scripts step by step. First, we need to create a database and then create a table and generate data.
 --               Once you have prepared the environment, you can start to understand the TOP clause. 
