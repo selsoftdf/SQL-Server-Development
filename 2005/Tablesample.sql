@@ -1,6 +1,6 @@
 -- Subject             : SQL Server tablesample
 -- Created By          : Selcuk KILINC
--- Executed SQL Version: Microsoft SQL Server 2022
+-- Executed SQL Version: Microsoft SQL Server 2019
 
 -- Suggestions : These scripts run on AdventureWorks2019 sample database.
 --               Read the comments and run script step by step

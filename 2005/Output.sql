@@ -9,149 +9,102 @@
 --The OUTPUT clause returns information about rows affected by an INSERT, UPDATE, or DELETE statement. 
 --This result set can be returned to the calling application and used for requirements such as controlling, archiving or logging.
 
------- Preparing the environment
------- Step 1: Create a table and generate data
+-- Creating Test Environment
 
- CREATE TABLE OutputSample
-    (
-        ID int NOT NULL,
-        Description varchar(100) NOT NULL,
-    )
+-- Create the EmployeeTraining table
+CREATE TABLE EmployeeTraining (
+    TrainingID       INT IDENTITY(5,5) PRIMARY KEY,
+    EmployeeID       INT NOT NULL,
+    TrainingName     NVARCHAR(100) NOT NULL,
+    TrainingDate     DATE NOT NULL,
+    CompletionStatus NVARCHAR(20) CHECK (CompletionStatus IN ('Completed', 'In Progress', 'Not Started'))
+);
 
-    INSERT INTO OutputSample (ID, Description) VALUES (1, 'row 1')
-    INSERT INTO OutputSample (ID, Description) VALUES (2, 'row 2')
-    INSERT INTO OutputSample (ID, Description) VALUES (3, 'row 3')
-
------ Sample 1: delete
-
-
-		create table #log(
-		 ID 		  int,
-		 Description  varchar(100),
-		 Insert_Date  datetime default(getdate())
-		)
-
-		delete from OutputSample
-		output deleted.ID,deleted.Description into #log(ID,Description)
-		where ID=3
-
-		select * from #log
-
-		select * from OutputSample
-
-		drop table #log
-
------ Sample 2: insert
-
-		create table #log(
-		 ID 		  int,
-		 Description  varchar(100),
-		 Insert_Date  datetime default(getdate())
-		)
-
-		insert OutputSample(ID,Description) 
-		output inserted.ID,inserted.Description into #log(ID,Description)
-		values(3,'row 3')
-
-	    insert OutputSample(ID,Description) 
-		output inserted.ID,inserted.Description into #log(ID,Description)
-		values(4,'row 4')
-
-		insert OutputSample(ID,Description) 
-		output inserted.ID,inserted.Description into #log(ID,Description)
-		values(4,'row 4')
-
-		select * from #log
-
-		select * from OutputSample
-
-		drop table #log
-
------ Sample 3: update
-		create table #log(
-		 ID 		  int,
-		 Description  varchar(100),
-		 Insert_Date  datetime default(getdate())
-		)
-
-	    update OutputSample
-		set ID=5, Description='row 5'
-		output deleted.ID,deleted.Description into #log(ID,Description)
-		where ID=4
+-- Generating records
+INSERT INTO EmployeeTraining (EmployeeID, TrainingName, TrainingDate, CompletionStatus)
+VALUES
+(1001, 'Cybersecurity Basics', '2025-01-15', 'Completed'),
+(1002, 'Data Privacy Regulations', '2025-02-20', 'Completed'),
+(1003, 'Advanced Excel Training', '2025-03-10', 'In Progress'),
+(1004, 'Project Management Fundamentals', '2025-04-05', 'Not Started'),
+(1005, 'Effective Communication', '2025-03-22', 'Completed'),
+(1001, 'Leadership Development', '2025-05-01', 'In Progress'),
+(1006, 'Time Management', '2025-04-18', 'Completed'),
+(1007, 'Remote Work Best Practices', '2025-02-28', 'Completed'),
+(1008, 'Conflict Resolution', '2025-06-05', 'Not Started'),
+(1002, 'Agile Methodology Overview', '2025-05-15', 'Completed');
 
 
-		select * from #log
-
-		select * from OutputSample
-
-		drop table #log
+select * from EmployeeTraining
 
 
------ Sample 4: delete and insert sample
+--- 1- Use OUTPUT INTO with an INSERT statement
+--- The following example inserts a row into the EmployeeTraining table and 
+--- uses the OUTPUT clause to return the results of the statement to the 
+--- @log table variable.
 
-      delete top (1) from OutputSample
-	  output deleted.*
+declare @log table (
+    TrainingID       INT,
+    EmployeeID       INT,
+    TrainingName     NVARCHAR(100),
+    TrainingDate     DATE,
+    CompletionStatus NVARCHAR(20));
 
-	  insert into OutputSample 
-	  output inserted.*
-	  values(1,'row 1')
-
-
-	  select * from OutputSample
-
------ Sample 5: update sample
-
-	  
-	  ;with cte as(
-	  	   select *,ROW_NUMBER() over(partition by ID order by ID asc) as rwn 
-	       from OutputSample
-	  )
-
-	   update cte
-	   set ID=4, Description='row 4'
-	   output deleted.ID,deleted.Description, inserted.ID, inserted.Description
-	   where ID=5 and rwn=1
+insert into EmployeeTraining 
+output inserted.TrainingID,inserted.EmployeeID,inserted.TrainingName,inserted.TrainingDate,inserted.CompletionStatus
+into @log
+values(1002,'T-SQL Programming','2025-06-14','Not Started')
 
 
-	  select * from OutputSample
+select * from @log
 
------ Sample 6: update sample
+select * from EmployeeTraining
 
-		create table #log(
-				 Insert_ID 		     int null,
-				 Insert_Description  varchar(100) null,
-				 Delete_ID           int null,
-				 Delete_Description  varchar(100) null,
-				 dml_type     char(1),
-				 Insert_Date  datetime default(getdate())
-				)
+--- 2- Use OUTPUT with a DELETE statement
+--- OUTPUT DELETED.* indicates that the results of the DELETE statement, that is, 
+--- all columns in the deleted rows, will be retrieved.
+--- It can be useful to delete things in a controlled way.
 
 
-	   insert into OutputSample(ID,Description)
-	   output inserted.ID,inserted.Description,'I' into #log(Insert_ID,Insert_Description,dml_type)
-	   values(6,'row 6'),(7,'row 7')
+delete from EmployeeTraining
+output deleted.*
+where TrainingID=55
 
-	   select * from #log
+select * from EmployeeTraining
 
-	   update OutputSample
-	   set ID=70, Description='row 70'
-	   output inserted.ID,inserted.Description,deleted.ID,deleted.Description,'U' into #log(Insert_ID,Insert_Description,Delete_ID,Delete_Description,dml_type)
-	   where ID=7
+--- 3- Use OUTPUT INTO with an UPDATE statement
+--- The following example is an UPDATE example. 
+--- New records and old records are hold in the @logEmployee table variable.
 
-	   select * from #log
+declare @logEmployee table(
+id				    int  identity(1,1),
+EmployeeID          int,
+NewTrainingDate     date,
+OldlogEmployee      date,
+NewCompletionStatus nvarchar(20),
+OldCompletionStatus nvarchar(20)
+)
 
-	   delete OutputSample
-	   output deleted.ID,deleted.Description,'D' into #log(Delete_ID,Delete_Description,dml_type)
-	   where ID=70
-		
-		select * from #log
-		select * from OutputSample
+update EmployeeTraining
+set TrainingDate = GETDATE(),
+    CompletionStatus = 'Not Started'
+	output inserted.EmployeeID,
+	       inserted.TrainingDate,
+	       deleted.TrainingDate,
+		   inserted.CompletionStatus,
+		   deleted.CompletionStatus
+	into @logEmployee
+where EmployeeID=1001
 
-		drop table #log
+select * from @logEmployee
+
+select * from EmployeeTraining
+
 
 
 ------ To clean the environment
 
-drop table OutputSample
+drop table EmployeeTraining
+
 
 
