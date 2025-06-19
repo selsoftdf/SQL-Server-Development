@@ -5,7 +5,7 @@
 
 --- The ROW_NUMBER( ) function returns the number of a row in the result set, starting at 1 for the first row.
 
-use AdventureWorks2014
+use AdventureWorks2019
 go
 
 --- example - 1  
